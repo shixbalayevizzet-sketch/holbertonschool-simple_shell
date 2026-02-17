@@ -1,0 +1,34 @@
+.TH HSH 1 "FEBRUARY 2026" "ALX SOFTWARE ENGINEERING" "Shell User Manual"
+.SH NAME
+hsh \- a simple UNIX command line interpreter
+.SH SYNOPSIS
+.B ./hsh
+.SH DESCRIPTION
+.B hsh
+is a sh-compatible command language interpreter that executes commands read from the standard input or from a file.
+.PP
+The shell can be used in both interactive and non-interactive modes. 
+.SH USAGE
+.SS Interactive Mode
+In interactive mode, 
+.B hsh 
+displays a prompt ($) and waits for the user to type a command. 
+.SS Non-interactive Mode
+In non-interactive mode, commands are piped into the shell. Example:
+.PP
+.RS
+echo "ls -l" | ./hsh
+.RE
+.SH ENVIRONMENT
+The 
+.B hsh
+shell uses the following environment variables:
+.TP
+.B PATH
+A colon-separated list of directories in which the shell looks for commands.
+.SH BUGS
+No known bugs at the moment.
+.SH AUTHORS
+Written by [Your Name] and [Partner's Name].
+.SH SEE ALSO
+sh(1), bash(1), gcc(1)
