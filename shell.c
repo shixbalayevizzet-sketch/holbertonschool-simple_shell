@@ -1,10 +1,10 @@
 #include "shell.h"
 
 /**
- * main - simple shell that executes one-word commands
- * @ac: argument count (unused)
- * @av: argument vector (unused)
- * @env: environment variables
+ * main - entry point for simple shell
+ * @ac: argument count
+ * @av: argument vector
+ * @env: environment
  *
  * Return: 0 on success
  */
@@ -14,10 +14,10 @@ int main(int ac, char **av, char **env)
 	size_t len = 0;
 	ssize_t read;
 	pid_t child_pid;
-	char *argv[] = {NULL, NULL};
-	int status;
+	char *argv[2];
+	int status, i;
 
-	(void)ac; (void)av;
+	(void)ac;
 
 	while (1)
 	{
@@ -25,32 +25,41 @@ int main(int ac, char **av, char **env)
 			write(STDOUT_FILENO, "#cisfun$ ", 9);
 
 		read = getline(&line, &len, stdin);
-		if (read == -1) /* Handle Ctrl+D (EOF) */
+		if (read == -1)
 		{
 			free(line);
 			exit(EXIT_SUCCESS);
 		}
 
-		if (line[read - 1] == '\n') /* Remove newline character */
-			line[read - 1] = '\0';
+		i = read - 1;
+		while (i >= 0 && (line[i] == '\n' || line[i] == ' ' ||
+				 line[i] == '\t' || line[i] == '\r'))
+		{
+			line[i] = '\0';
+			i--;
+		}
+
+		if (line[0] == '\0')
+			continue;
 
 		argv[0] = line;
+		argv[1] = NULL;
 		child_pid = fork();
 		if (child_pid == -1)
 		{
 			perror("Error");
 			continue;
 		}
-		if (child_pid == 0) /* Child process */
+		if (child_pid == 0)
 		{
 			if (execve(argv[0], argv, env) == -1)
 			{
-				perror(av[0]);
+				fprintf(stderr, "%s: 1: %s: not found\n", av[0], line);
 				free(line);
-				exit(EXIT_FAILURE);
+				exit(127);
 			}
 		}
-		else /* Parent process */
+		else
 			wait(&status);
 	}
 	free(line);
