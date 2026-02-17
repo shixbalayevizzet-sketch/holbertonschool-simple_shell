@@ -1,21 +1,21 @@
 #include "shell.h"
 
 /**
- * main - entry point for simple shell
+ * main - simple shell that executes commands
  * @ac: argument count
  * @av: argument vector
- * @env: environment
+ * @env: environment variables
  *
  * Return: 0 on success
  */
 int main(int ac, char **av, char **env)
 {
-	char *line = NULL;
+	char *line = NULL, *command;
 	size_t len = 0;
 	ssize_t read;
 	pid_t child_pid;
-	char *argv[2];
-	int status, i;
+	char *args[2];
+	int status;
 
 	(void)ac;
 
@@ -31,19 +31,15 @@ int main(int ac, char **av, char **env)
 			exit(EXIT_SUCCESS);
 		}
 
-		i = read - 1;
-		while (i >= 0 && (line[i] == '\n' || line[i] == ' ' ||
-				 line[i] == '\t' || line[i] == '\r'))
-		{
-			line[i] = '\0';
-			i--;
-		}
+		/* strtok cleans leading/trailing whitespace and newlines */
+		command = strtok(line, " \n\t");
 
-		if (line[0] == '\0')
+		if (command == NULL) /* Handle empty lines */
 			continue;
 
-		argv[0] = line;
-		argv[1] = NULL;
+		args[0] = command;
+		args[1] = NULL;
+
 		child_pid = fork();
 		if (child_pid == -1)
 		{
@@ -52,9 +48,9 @@ int main(int ac, char **av, char **env)
 		}
 		if (child_pid == 0)
 		{
-			if (execve(argv[0], argv, env) == -1)
+			if (execve(args[0], args, env) == -1)
 			{
-				fprintf(stderr, "%s: 1: %s: not found\n", av[0], line);
+				fprintf(stderr, "%s: 1: %s: not found\n", av[0], command);
 				free(line);
 				exit(127);
 			}
