@@ -86,8 +86,14 @@ int main(void)
 		if (argv[0] == NULL)
 			continue;
 
-		full_path = get_path(argv[0]);
+		/* Task 0.3: Check for "exit" built-in */
+		if (strcmp(argv[0], "exit") == 0)
+		{
+			free(line);
+			exit(exit_status);
+		}
 
+		full_path = get_path(argv[0]);
 		if (full_path == NULL)
 		{
 			fprintf(stderr, "./hsh: 1: %s: not found\n", argv[0]);
