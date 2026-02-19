@@ -17,7 +17,6 @@ char *get_path(char *command)
 	char *path, *path_copy, *token, *file_path;
 	int i;
 
-	/* If command is already a full path, check if it exists */
 	if (command[0] == '/' || command[0] == '.')
 	{
 		if (access(command, X_OK) == 0)
@@ -25,7 +24,6 @@ char *get_path(char *command)
 		return (NULL);
 	}
 
-	/* Find PATH in environment variables */
 	path = NULL;
 	for (i = 0; environ[i]; i++)
 	{
@@ -43,7 +41,6 @@ char *get_path(char *command)
 	token = strtok(path_copy, ":");
 	while (token)
 	{
-		/* Construct full path: directory + / + command */
 		file_path = malloc(strlen(token) + strlen(command) + 2);
 		if (!file_path)
 			break;
@@ -75,15 +72,12 @@ int main(void)
 
 	while (1)
 	{
-		/* Print prompt if in interactive mode */
 		if (isatty(STDIN_FILENO))
 			printf("$ ");
 
-		/* Read input */
 		if (getline(&line, &len, stdin) == -1)
 			break;
 
-		/* Tokenize input */
 		i = 0;
 		argv[i] = strtok(line, " \t\r\n\a");
 		while (argv[i])
@@ -92,4 +86,32 @@ int main(void)
 		if (argv[0] == NULL)
 			continue;
 
-		/* Find
+		full_path = get_path(argv[0]);
+
+		if (full_path == NULL)
+		{
+			fprintf(stderr, "./hsh: 1: %s: not found\n", argv[0]);
+			exit_status = 127;
+			continue;
+		}
+
+		child_pid = fork();
+		if (child_pid == 0)
+		{
+			if (execve(full_path, argv, environ) == -1)
+			{
+				perror("Error");
+				exit(2);
+			}
+		}
+		else
+		{
+			wait(&status);
+			if (WIFEXITED(status))
+				exit_status = WEXITSTATUS(status);
+			free(full_path);
+		}
+	}
+	free(line);
+	return (exit_status);
+}
