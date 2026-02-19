@@ -7,14 +7,9 @@
 
 extern char **environ;
 
-/**
- * get_path - Finds the full path of a command using the PATH variable.
- * @command: The command to find (e.g., "ls").
- * Return: Full path string if found, otherwise NULL.
- */
 char *get_path(char *command)
 {
-	char *path, *path_copy, *token, *file_path;
+	char *path = NULL, *path_copy, *token, *file_path;
 	int i;
 
 	if (command[0] == '/' || command[0] == '.')
@@ -23,8 +18,6 @@ char *get_path(char *command)
 			return (strdup(command));
 		return (NULL);
 	}
-
-	path = NULL;
 	for (i = 0; environ[i]; i++)
 	{
 		if (strncmp(environ[i], "PATH=", 5) == 0)
@@ -33,10 +26,8 @@ char *get_path(char *command)
 			break;
 		}
 	}
-
 	if (!path || *path == '\0')
 		return (NULL);
-
 	path_copy = strdup(path);
 	token = strtok(path_copy, ":");
 	while (token)
@@ -45,7 +36,6 @@ char *get_path(char *command)
 		if (!file_path)
 			break;
 		sprintf(file_path, "%s/%s", token, command);
-
 		if (access(file_path, X_OK) == 0)
 		{
 			free(path_copy);
@@ -58,41 +48,39 @@ char *get_path(char *command)
 	return (NULL);
 }
 
-/**
- * main - Entry point for the simple shell.
- * Return: The exit status of the last executed command.
- */
 int main(void)
 {
-	char *line = NULL, *full_path = NULL;
+	char *line = NULL, *full_path = NULL, *argv[1024];
 	size_t len = 0;
-	char *argv[1024];
 	int i, status, exit_status = 0;
 	pid_t child_pid;
 
 	while (1)
 	{
 		if (isatty(STDIN_FILENO))
-			printf("$ ");
-
+			write(STDOUT_FILENO, "$ ", 2);
 		if (getline(&line, &len, stdin) == -1)
 			break;
-
 		i = 0;
 		argv[i] = strtok(line, " \t\r\n\a");
 		while (argv[i])
 			argv[++i] = strtok(NULL, " \t\r\n\a");
-
 		if (argv[0] == NULL)
 			continue;
-
-		/* Task 0.3: Check for "exit" built-in */
 		if (strcmp(argv[0], "exit") == 0)
 		{
 			free(line);
 			exit(exit_status);
 		}
-
+		if (strcmp(argv[0], "env") == 0)
+		{
+			for (i = 0; environ[i]; i++)
+			{
+				write(STDOUT_FILENO, environ[i], strlen(environ[i]));
+				write(STDOUT_FILENO, "\n", 1);
+			}
+			continue;
+		}
 		full_path = get_path(argv[0]);
 		if (full_path == NULL)
 		{
@@ -100,13 +88,13 @@ int main(void)
 			exit_status = 127;
 			continue;
 		}
-
 		child_pid = fork();
 		if (child_pid == 0)
 		{
 			if (execve(full_path, argv, environ) == -1)
 			{
-				perror("Error");
+				free(full_path);
+				free(line);
 				exit(2);
 			}
 		}
